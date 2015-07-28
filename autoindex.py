@@ -53,7 +53,7 @@ class IndexHandler(web.RequestHandler):
     def _send_file(self, full_path):
         with open(full_path, 'rb') as fin:
             while True:
-                chunk = yield self._read_chunk(65536)
+                chunk = yield self._read_chunk(fin)
                 if not chunk:
                     return
                 try:
