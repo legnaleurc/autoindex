@@ -27,6 +27,7 @@ class IndexHandler(web.RequestHandler):
                 self.set_header('Content-Type', 'application/octet-stream')
             else:
                 self.set_header('Content-Type', type_)
+            self.set_header('Content-Length', op.getsize(full_path))
 
             with open(full_path, 'rb') as fin:
                 while True:
