@@ -75,7 +75,7 @@ def main(args=None):
 
     main_loop = ioloop.IOLoop.instance()
 
-    pool = cf.ThreadPoolExecutor()
+    pool = cf.ThreadPoolExecutor(max_workers=4)
 
     application = web.Application([
         (r'/(.*)', IndexHandler, {
