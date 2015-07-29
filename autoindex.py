@@ -6,15 +6,17 @@ import logging
 import os
 import mimetypes
 import concurrent.futures as cf
+import urllib.parse as up
 
-from tornado import ioloop, web, log, iostream, gen, concurrent
+from tornado import ioloop, web, log, iostream, gen, concurrent, options
 
 
 class IndexHandler(web.RequestHandler):
 
-    def initialize(self, root, pool, *args, **kwargs):
+    def initialize(self, root, pool, proxy, *args, **kwargs):
         self._root = root
         self._pool = pool
+        self._proxy = proxy
         self._loop = ioloop.IOLoop.current()
 
     @gen.coroutine
@@ -25,6 +27,10 @@ class IndexHandler(web.RequestHandler):
             raise web.HTTPError(404)
 
         if op.isfile(full_path):
+            if self._proxy:
+                self.redirect(up.urljoin(self._proxy, path))
+                return
+
             type_, encoding = mimetypes.guess_type(full_path)
             if not type_:
                 self.set_header('Content-Type', 'application/octet-stream')
@@ -71,6 +77,11 @@ def main(args=None):
     if args is None:
         args = sys.argv
 
+    options.define('root', default='.', help='document root')
+    options.define('proxy', default='', help='http proxy')
+
+    options.parse_command_line()
+
     log.enable_pretty_logging()
 
     main_loop = ioloop.IOLoop.instance()
@@ -79,8 +90,9 @@ def main(args=None):
 
     application = web.Application([
         (r'/(.*)', IndexHandler, {
-            'root': '.',
+            'root': options.options.root,
             'pool': pool,
+            'proxy': options.options.proxy,
         }),
     ], debug=True)
 
